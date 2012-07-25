@@ -593,10 +593,3 @@ class Scanner
   public function dump() { print_r($this->tokens); }
 }
 
-if ($_SERVER['argc'] > 1) {
-  $s = new Scanner($_SERVER['argv'][1]);
-  $p = new Parser($s);
-  
-  $p->dump(true);
-  print "\n= " . $p->reduce();
-}
