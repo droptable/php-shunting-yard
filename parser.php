@@ -206,15 +206,12 @@ class Parser
       switch ($op) {
         case T_PLUS:
           return $lhs + $rhs;
-          break;
           
         case T_MINUS:
           return $lhs - $rhs;
-          break;
           
         case T_TIMES:
           return $lhs * $rhs;
-          break;
           
         case T_DIV:
           if ($rhs === 0.) 
@@ -226,10 +223,11 @@ class Parser
           if ($rhs === 0.)
             throw new RuntimeError('laufzeit fehler: rest-teilung durch 0');
           
-          return $lhs % $rhs;
+          // php (bzw. c) kann hier nur mit ganzzahlen umgehen
+          return (float) $lhs % $rhs;
           
         case T_POW:
-          return pow($lhs, $rhs);
+          return (float) pow($lhs, $rhs);
       }
     }
     
