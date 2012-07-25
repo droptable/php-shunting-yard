@@ -53,7 +53,6 @@ const T_NUMBER      = 1,  // eine nummer (integer / double)
       T_POW         = 70, // ^
       T_UNARY_PLUS  = 71, // + als vorzeichen (zur übersetzungszeit ermittelt)
       T_UNARY_MINUS = 72; // - als vorzeichen (zur übersetzungszeit ermittelt)
-      
 
 class Token
 {
@@ -291,23 +290,13 @@ class Parser
       $argc = 1;
       
       while ($t = $this->scanner->next()) {
-        if ($t->type === T_IDENT) {
-          $next = $this->scanner->peek();
-          
-          if ($next && $next->type === T_POPEN) {
-            $this->stack[] = $t;
-            $this->fargs($t);
-            continue;
-          }
-        }
-        
-        if ($t->type === T_COMMA)
-          ++$argc;
-        
         $this->handle($t);
         
         if ($t->type === T_PCLOSE)
           break;
+        
+        if ($t->type === T_COMMA)
+          ++$argc;
       }
     }
     
@@ -320,6 +309,9 @@ class Parser
       case T_NUMBER:
       case T_IDENT:
         // If the token is a number (identifier), then add it to the output queue.
+        if (!is_array($this->queue))
+          exit('woha');
+        
         $this->queue[] = $t;
         $this->state = self::ST_2;
         break;
@@ -344,7 +336,7 @@ class Parser
           
           // Until the token at the top of the stack is a left parenthesis,
           // pop operators off the stack onto the output queue.
-          $this->queue = array_pop($this->stack);
+          $this->queue[] = array_pop($this->stack);
         }
         
         // If no left parentheses are encountered, either the separator was misplaced
