@@ -136,7 +136,7 @@ class Parser
           
           if ($na > 1)
             $lhs = array_pop($this->stack);
-          
+            
           $len -= $na - 1;
           
           // Push the returned results, if any, back onto the stack.
@@ -557,7 +557,7 @@ class Scanner
           break;
           
         default:
-          if ($value[0] === '.' || ctype_digit($value[0])) {
+          if (is_numeric($value)) {
             $type  = T_NUMBER;
             $value = (float) $value;
             break;
@@ -574,11 +574,17 @@ class Scanner
     }
   }
   
-  public function top() { return current($this->tokens); }
+  public function curr() { return current($this->tokens); }
   public function next() { return next($this->tokens); }
   public function prev() { return prev($this->tokens); }
-  public function peek() { $v = $this->next(); $this->prev(); return $v; }
-  public function walk($s) { return $this->tokens[key($this->tokens) + $s]; }
   public function dump() { print_r($this->tokens); }
+  
+  public function peek()
+  {
+    $v = next($this->tokens);
+    prev($this->tokens);
+    
+    return $v;
+  }
 }
 
