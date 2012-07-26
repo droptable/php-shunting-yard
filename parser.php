@@ -65,6 +65,42 @@ class Token
   }
 }
 
+class Context
+{
+  protected $fnt = [], $cst = [];
+  
+  public function fn($name, array $args)
+  {
+    if (!isset($this->fnt[$name]))
+      throw new RuntimeError('laufzeit fehler: undefinierte funktion "' . $name . '"');
+    
+    return (float) call_user_func_array($this->fnt[$name], $args);
+  }
+  
+  public function cs($name)
+  {
+    if (!isset($this->cst[$name]))
+      throw new RuntimeError('laufzeit fehler: undefinierte konstante "' . $name . '"');
+    
+    return $this->cst[$name];
+  }
+  
+  public function def($name, $value = null) 
+  {
+    // einfacher wrapper
+    if ($value === null) $value = $name;
+    
+    if (is_callable($value))
+      $this->fnt[$name] = $value;
+    
+    elseif (is_numeric($value))
+      $this->cst[$name] = (float) $value;
+    
+    else
+      throw new Exception('funktion oder nummer erwartet');
+  }
+}
+
 class Parser
 {
   const ST_1 = 1, // wartet auf operand oder unäre vorzeichen
@@ -98,7 +134,7 @@ class Parser
     }
   }
   
-  public function reduce()
+  public function reduce(Context $ctx)
   {
     $this->stack = [];
     $len = 0;
@@ -111,7 +147,7 @@ class Parser
         case T_IDENT:
           // wert einer konstanten ermitteln
           if ($t->type === T_IDENT)
-            $t = new Token(T_NUMBER, $this->cs($t->value));
+            $t = new Token(T_NUMBER, $ctx->cs($t->value));
           
           // If the token is a value or identifier
           // Push it onto the stack.
@@ -160,7 +196,7 @@ class Parser
           $len -= $argc - 1;
           
           // Push the returned results, if any, back onto the stack.
-          $this->stack[] = new Token(T_NUMBER, $this->fn($t->value, $argv));
+          $this->stack[] = new Token(T_NUMBER, $ctx->fn($t->value, $argv));
           break;
             
         default:
@@ -180,23 +216,6 @@ class Parser
     // If there are more values in the stack
     // (Error) The user input has too many values.
     throw new RuntimeError('laufzeit fehler: zu viele werte im stack');
-  }
-  
-  protected function cs($name)
-  {
-    if (isset(self::$cs[$name])) return self::$cs[$name];
-    
-    throw new RuntimeError('laufzeit fehler: undefinierte konstante "' . $name . '"');
-  }
-  
-  protected function fn($name, array $args)
-  {
-    // print "$name(" . implode(', ', $args) . ")\n";
-    
-    if (isset(self::$fn[$name]))
-      return (float) call_user_func_array(self::$fn[$name], $args);
-    
-    throw new RuntimeError('laufzeit fehler: undefinierte funktion "' . $name . '"');
   }
   
   protected function op($op, $lhs, $rhs)
@@ -481,24 +500,10 @@ class Parser
     return 0;
   }
   
-  public static function parse($term)
+  public static function parse($term, Context $ctx = null)
   {
-    return (new self(new Scanner($term)))->reduce();
-  }
-  
-  public static function def($name, $value = null)
-  {
-    // einfacher wrapper
-    if ($value === null) $value = $name;
-    
-    if (is_callable($value))
-      self::$fn[$name] = $value;
-    
-    elseif (is_numeric($value))
-      self::$cs[$name] = (float) $value;
-    
-    else
-      throw new Exception('funktion oder nummer erwartet');
+    return (new self(new Scanner($term)))
+      ->reduce($ctx ?: new Context);
   }
 }
 
