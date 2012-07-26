@@ -73,6 +73,9 @@ class Parser
   protected $scanner, $state = self::ST_1;
   protected $queue, $stack;
   
+  // definierte funktionen und konstanten
+  protected static $fn = [], $cs = [ 'PI' => M_PI, 'π' => M_PI ];
+  
   public function __construct(Scanner $scanner)
   {
     $this->scanner = $scanner;
@@ -134,6 +137,9 @@ class Parser
           $rhs = array_pop($this->stack);
           $lhs = null;
           
+          // print "{$lhs->value} {$t->value} {$rhs->value}\n";
+          // print "{$t->value} {$rhs->value}\n";
+          
           if ($na > 1)
             $lhs = array_pop($this->stack);
             
@@ -178,20 +184,19 @@ class Parser
   
   protected function cs($name)
   {
-    print "ermittle konstante $name\n";
+    if (isset(self::$cs[$name])) return self::$cs[$name];
     
-    /* hier konstanten definieren */
-    
-    return 1;
+    throw new RuntimeError('laufzeit fehler: undefinierte konstante "' . $name . '"');
   }
   
   protected function fn($name, array $args)
   {
-    print "rufe funktion $name auf mit parametern: " . implode(', ', $args) . "\n";
+    // print "$name(" . implode(', ', $args) . ")\n";
     
-    /* hier funktionen definieren */
+    if (isset(self::$fn[$name]))
+      return (float) call_user_func_array(self::$fn[$name], $args);
     
-    return 1;
+    throw new RuntimeError('laufzeit fehler: undefinierte funktion "' . $name . '"');
   }
   
   protected function op($op, $lhs, $rhs)
@@ -420,7 +425,7 @@ class Parser
           throw new ParseError('parser fehler: unerwarteter token `)`');
         
         // If the token at the top of the stack is a function token, pop it onto the output queue.
-        if (($t = end($this->stack)) && $t->type === T_IDENT)
+        if (($t = end($this->stack)) && $t->type === T_FUNCTION)
           $this->queue[] = array_pop($this->stack);
         
         $this->state = self::ST_2;  
@@ -480,12 +485,27 @@ class Parser
   {
     return (new self(new Scanner($term)))->reduce();
   }
+  
+  public static function def($name, $value = null)
+  {
+    // einfacher wrapper
+    if ($value === null) $value = $name;
+    
+    if (is_callable($value))
+      self::$fn[$name] = $value;
+    
+    elseif (is_numeric($value))
+      self::$cs[$name] = (float) $value;
+    
+    else
+      throw new Exception('funktion oder nummer erwartet');
+  }
 }
 
 class Scanner
 {
   //                  operatoren        nummern               wörter                  leerzeichen
-  const PATTERN = '/^([,\+\-\*\/\^%\(\)]|\d*\.\d+|\d+\.\d*|\d+|[a-z_A-Z]+[a-z_A-Z0-9]*|[ \t]+)/';
+  const PATTERN = '/^([,\+\-\*\/\^%\(\)]|\d*\.\d+|\d+\.\d*|\d+|[a-z_A-Zπ]+[a-z_A-Z0-9]*|[ \t]+)/';
   
   const ERR_EMPTY = 'leerer fund! (endlosschleife) in der nähe von: `%s`',
         ERR_MATCH = 'syntax fehler in der nähe von `%s`';
