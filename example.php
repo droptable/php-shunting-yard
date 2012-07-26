@@ -4,7 +4,7 @@ require 'parser.php';
 
 use rr\shunt\Parser;
 
-$trm = '1+2*3/4%5';
+$trm = '3+4*2/(1-5)^2^3';
 $res = Parser::parse($trm);
 
-print $res; // 2 (eigl. 2.5, ist aber php-bedingt)
+print $res; // 3.0001220703125
