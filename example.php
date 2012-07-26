@@ -19,4 +19,3 @@ $ctx->def('bar', function($a, $b) { return $a * $b; });
 
 $trm = '3 + bar(4, 2) / (abs(-1) - foo) ^ 2 ^ 3';
 print Parser::parse($trm, $ctx); // 3.0001220703125
-

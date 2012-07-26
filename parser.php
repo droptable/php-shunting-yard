@@ -568,8 +568,19 @@ class Scanner
         case '(':
           $type = T_POPEN;
           
-          if ($prev && $prev->type === T_IDENT)
-            $prev->type = T_FUNCTION;
+          if ($prev) {
+            switch ($prev->type) {
+              case T_IDENT:
+                $prev->type = T_FUNCTION;
+                break;
+                
+              case T_NUMBER:
+              case T_PCLOSE:
+                // erlaubt 2(2) -> 2 * 2 | (2)(2) -> 2 * 2
+                $this->tokens[] = new Token(T_TIMES, '*');
+                break;
+            }
+          }
           
           break;
           
