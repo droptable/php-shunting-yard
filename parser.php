@@ -440,10 +440,10 @@ class Parser
       
       case T_PLUS:
       case T_MINUS:
-      
+        return 1; //ltr
+        
       case T_UNARY_PLUS:
       case T_UNARY_MINUS:
-        return 1; //ltr
       
       case T_POW:  
         return 2; //rtl
