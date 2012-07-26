@@ -131,13 +131,11 @@ class Parser
           if ($len < $na) 
             throw new RuntimeError('laufzeit fehler: zu wenig paramter für operator "' . $t->value . '" (' . $na . ' -> ' . $len . ')');
           
-          $lhs = array_pop($this->stack);
-          $rhs = null;
+          $rhs = array_pop($this->stack);
+          $lhs = null;
           
-          if ($na > 1)  {
-            $rhs = $lhs;
+          if ($na > 1)
             $lhs = array_pop($this->stack);
-          }
           
           $len -= $na - 1;
           
@@ -198,7 +196,7 @@ class Parser
   
   protected function op($op, $lhs, $rhs)
   {
-    if ($rhs !== null) {
+    if ($lhs !== null) {
       $lhs = $lhs->value;
       $rhs = $rhs->value;
       
@@ -232,10 +230,10 @@ class Parser
     
     switch ($op) {
       case T_UNARY_MINUS:
-        return -$lhs->value;
+        return -$rhs->value;
         
       case T_UNARY_PLUS:
-        return +$lhs->value;
+        return +$rhs->value;
     }
   }
   
@@ -458,6 +456,10 @@ class Parser
   protected function preced(Token $t)
   {
     switch ($t->type) {
+      case T_UNARY_PLUS:
+      case T_UNARY_MINUS:
+        return 4;
+        
       case T_POW:
         return 3;
         
@@ -468,8 +470,6 @@ class Parser
         
       case T_PLUS:
       case T_MINUS:
-      case T_UNARY_PLUS:
-      case T_UNARY_MINUS:
         return 1;
     }
     
