@@ -308,10 +308,7 @@ class Parser
     switch ($t->type) {
       case T_NUMBER:
       case T_IDENT:
-        // If the token is a number (identifier), then add it to the output queue.
-        if (!is_array($this->queue))
-          exit('woha');
-        
+        // If the token is a number (identifier), then add it to the output queue.        
         $this->queue[] = $t;
         $this->state = self::ST_2;
         break;
