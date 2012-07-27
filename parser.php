@@ -52,7 +52,8 @@ const T_NUMBER      = 1,  // eine nummer (integer / double)
       T_MOD         = 69, // %
       T_POW         = 70, // ^
       T_UNARY_PLUS  = 71, // + als vorzeichen (zur übersetzungszeit ermittelt)
-      T_UNARY_MINUS = 72; // - als vorzeichen (zur übersetzungszeit ermittelt)
+      T_UNARY_MINUS = 72, // - als vorzeichen (zur übersetzungszeit ermittelt)
+      T_NOT         = 73; // ! als vorzeichen
 
 class Token
 {
@@ -109,9 +110,6 @@ class Parser
   protected $scanner, $state = self::ST_1;
   protected $queue, $stack;
   
-  // definierte funktionen und konstanten
-  protected static $fn = [], $cs = [ 'PI' => M_PI, 'π' => M_PI ];
-  
   public function __construct(Scanner $scanner)
   {
     $this->scanner = $scanner;
@@ -163,6 +161,7 @@ class Parser
         case T_DIV:
         case T_MOD:
         case T_POW:
+        case T_NOT:
           // It is known a priori that the operator takes n arguments.
           $na = $this->argc($t);
           
@@ -190,10 +189,10 @@ class Parser
           $argc = $t->argc;
           $argv = [];
           
+          $len -= $argc - 1;
+          
           for (; $argc > 0; --$argc)
             array_unshift($argv, array_pop($this->stack)->value);
-          
-          $len -= $argc - 1;
           
           // Push the returned results, if any, back onto the stack.
           $this->stack[] = new Token(T_NUMBER, $ctx->fn($t->value, $argv));
@@ -206,12 +205,8 @@ class Parser
     
     // If there is only one value in the stack
     // That value is the result of the calculation.
-    if (count($this->stack) === 1) {
-      $res = array_pop($this->stack);
-      unset($this->stack);
-      
-      return $res->value;
-    }
+    if (count($this->stack) === 1)
+      return array_pop($this->stack)->value;
     
     // If there are more values in the stack
     // (Error) The user input has too many values.
@@ -250,9 +245,15 @@ class Parser
         case T_POW:
           return (float) pow($lhs, $rhs);
       }
+      
+      // throw?
+      return 0;
     }
     
     switch ($op) {
+      case T_NOT:
+        return (float) !$rhs->value;
+        
       case T_UNARY_MINUS:
         return -$rhs->value;
         
@@ -380,6 +381,7 @@ class Parser
       case T_DIV:
       case T_MOD:
       case T_POW:
+      case T_NOT:
         while (!empty($this->stack)) {
           $s = end($this->stack);
             
@@ -401,6 +403,7 @@ class Parser
             case T_DIV:
             case T_MOD:
             case T_POW:
+            case T_NOT:
               $p1 = $this->preced($t);
               $p2 = $this->preced($s);
               
@@ -465,7 +468,8 @@ class Parser
       case T_PLUS:
       case T_MINUS:
         return 1; //ltr
-        
+      
+      case T_NOT:  
       case T_UNARY_PLUS:
       case T_UNARY_MINUS:
       
@@ -480,6 +484,7 @@ class Parser
   protected function preced(Token $t)
   {
     switch ($t->type) {
+      case T_NOT:
       case T_UNARY_PLUS:
       case T_UNARY_MINUS:
         return 4;
@@ -509,8 +514,8 @@ class Parser
 
 class Scanner
 {
-  //                  operatoren        nummern               wörter                  leerzeichen
-  const PATTERN = '/^([,\+\-\*\/\^%\(\)]|\d*\.\d+|\d+\.\d*|\d+|[a-z_A-Zπ]+[a-z_A-Z0-9]*|[ \t]+)/';
+  //                  operatoren          nummern               wörter                  leerzeichen
+  const PATTERN = '/^([!,\+\-\*\/\^%\(\)]|\d*\.\d+|\d+\.\d*|\d+|[a-z_A-Zπ]+[a-z_A-Z0-9]*|[ \t]+)/';
   
   const ERR_EMPTY = 'leerer fund! (endlosschleife) in der nähe von: `%s`',
         ERR_MATCH = 'syntax fehler in der nähe von `%s`';
@@ -541,6 +546,10 @@ class Scanner
       }
       
       switch ($value) {
+        case '!':
+          $type = T_NOT;
+          break;
+          
         case '+':
           $type = T_PLUS;
           break;
