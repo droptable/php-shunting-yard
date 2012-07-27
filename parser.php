@@ -166,17 +166,17 @@ class Parser
           $na = $this->argc($t);
           
           // If there are fewer than n values on the stack
-          if ($len < $na) 
+          if ($len < $na)
             throw new RuntimeError('laufzeit fehler: zu wenig paramter für operator "' . $t->value . '" (' . $na . ' -> ' . $len . ')');
           
           $rhs = array_pop($this->stack);
           $lhs = null;
           
-          // print "{$lhs->value} {$t->value} {$rhs->value}\n";
-          // print "{$t->value} {$rhs->value}\n";
-          
           if ($na > 1)
             $lhs = array_pop($this->stack);
+           
+          // if ($lhs) print "{$lhs->value} {$t->value} {$rhs->value}\n";
+          // else print "{$t->value} {$rhs->value}\n";
             
           $len -= $na - 1;
           
@@ -532,7 +532,7 @@ class Scanner
         throw new SyntaxError(sprintf(self::ERR_MATCH, substr($input, 0, 10)));
       }
       
-      if (empty($match[1])) {
+      if (empty($match[1]) && $match[1] !== '0') {
         // leerer fund -> endlosschleife vermeiden
         throw new SyntaxError(sprintf(self::ERR_EMPTY, substr($input, 0, 10)));
       }
@@ -615,7 +615,7 @@ class Scanner
       $this->tokens[] = $prev = new Token($type, $value);
       
       // prüfen ob das ende erreicht wurde
-      if (empty($input)) break;
+      if (trim($input) === '') break;
     }
   }
   
