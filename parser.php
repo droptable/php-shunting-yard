@@ -68,7 +68,7 @@ class Token
 
 class Context
 {
-  protected $fnt = [], $cst = [];
+  protected $fnt = [], $cst = [ 'PI' => M_PI, 'π' => M_PI ];
   
   public function fn($name, array $args)
   {
@@ -369,14 +369,8 @@ class Parser
       // If the token is an operator, op1, then:
       case T_PLUS:
       case T_MINUS:
-        if ($this->state === self::ST_1)
-          $t->type = $t->type === T_PLUS ? T_UNARY_PLUS : T_UNARY_MINUS;
-        
-        // kein break
-        
-        // design-bedingt wechseln wir anschließend wieder in ST_1
-        // es sind also mehrere vorzeichen erlaubt: -+1 = okay
-        
+      case T_UNARY_PLUS:
+      case T_UNARY_MINUS:
       case T_TIMES:
       case T_DIV:
       case T_MOD:
@@ -522,11 +516,24 @@ class Scanner
   
   protected $tokens = [ 0 ];
   
+  protected $lookup = [
+    '+' => T_PLUS,
+    '-' => T_MINUS,
+    '/' => T_DIV,
+    '%' => T_MOD,
+    '^' => T_POW,
+    '*' => T_TIMES,
+    '(' => T_POPEN,
+    ')' => T_PCLOSE,
+    '!' => T_NOT,
+    ',' => T_COMMA
+  ];
+  
   public function __construct($input)
   {
-    $prev = null;
+    $prev = new Token(T_OPERATOR, 'noop');
     
-    for (;;) {
+    while (trim($input) !== '') {
       if (!preg_match(self::PATTERN, $input, $match)) {
         // syntax fehler
         throw new SyntaxError(sprintf(self::ERR_MATCH, substr($input, 0, 10)));
@@ -545,77 +552,40 @@ class Scanner
         continue;
       }
       
-      switch ($value) {
-        case '!':
-          $type = T_NOT;
+      if (is_numeric($value)) {
+        if ($prev->type === T_PCLOSE)
+          $this->tokens[] = new Token(T_TIMES, '*');
+        
+        $this->tokens[] = $prev = new Token(T_NUMBER, (float) $value);
+        continue;
+      }
+      
+      switch ($type = isset($this->lookup[$value]) ? $this->lookup[$value] : T_IDENT) {
+        case T_PLUS:
+          if ($prev->type & T_OPERATOR || $prev->type == T_POPEN) $type = T_UNARY_PLUS;
           break;
           
-        case '+':
-          $type = T_PLUS;
+        case T_MINUS:
+          if ($prev->type & T_OPERATOR || $prev->type == T_POPEN) $type = T_UNARY_MINUS;
           break;
           
-        case '-':
-          $type = T_MINUS;
-          break;
-          
-        case '*':
-          $type = T_TIMES;
-          break;
-          
-        case '/':
-          $type = T_DIV;
-          break;
-          
-        case '%':
-          $type = T_MOD;
-          break;
-          
-        case '^':
-          $type = T_POW;
-          break;
-          
-        case '(':
-          $type = T_POPEN;
-          
-          if ($prev) {
-            switch ($prev->type) {
-              case T_IDENT:
-                $prev->type = T_FUNCTION;
-                break;
-                
-              case T_NUMBER:
-              case T_PCLOSE:
-                // erlaubt 2(2) -> 2 * 2 | (2)(2) -> 2 * 2
-                $this->tokens[] = new Token(T_TIMES, '*');
-                break;
-            }
+        case T_POPEN:
+          switch ($prev->type) {
+            case T_IDENT:
+              $prev->type = T_FUNCTION;
+              break;
+              
+            case T_NUMBER:
+            case T_PCLOSE:
+              // erlaubt 2(2) -> 2 * 2 | (2)(2) -> 2 * 2
+              $this->tokens[] = new Token(T_TIMES, '*');
+              break;
           }
           
           break;
-          
-        case ')':
-          $type = T_PCLOSE;
-          break;
-          
-        case ',':
-          $type = T_COMMA;
-          break;
-          
-        default:
-          if (is_numeric($value)) {
-            $type  = T_NUMBER;
-            $value = (float) $value;
-            break;
-          }
-                    
-          $type  = T_IDENT;
-          $value = $value;
       }
       
       $this->tokens[] = $prev = new Token($type, $value);
-      
-      // prüfen ob das ende erreicht wurde
-      if (trim($input) === '') break;
     }
   }
   
