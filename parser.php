@@ -68,8 +68,8 @@ class Token
 
 class Context
 {
-  protected $fnt = [], $cst = [ 'PI' => M_PI, 'π' => M_PI ];
-  
+  protected $fnt = array(), $cst = array( 'PI' => M_PI, 'π' => M_PI );
+
   public function fn($name, array $args)
   {
     if (!isset($this->fnt[$name]))
@@ -115,9 +115,9 @@ class Parser
     $this->scanner = $scanner;
     
     // alloc
-    $this->queue = [];
-    $this->stack = [];
-    
+    $this->queue = array();
+    $this->stack = array();
+
     // queue erzeugen
     while (($t = $this->scanner->next()) !== false)
       $this->handle($t);
@@ -134,7 +134,7 @@ class Parser
   
   public function reduce(Context $ctx)
   {
-    $this->stack = [];
+    $this->stack = array();
     $len = 0;
     
     // While there are input tokens left
@@ -187,8 +187,8 @@ class Parser
         case T_FUNCTION:
           // function
           $argc = $t->argc;
-          $argv = [];
-          
+          $argv = array();
+
           $len -= $argc - 1;
           
           for (; $argc > 0; --$argc)
@@ -283,9 +283,9 @@ class Parser
       print_r($this->queue);
       return;
     }
-    
-    $res = [];
-    
+
+    $res = array();
+
     foreach ($this->queue as $t) {
       $val = $t->value;
       
@@ -501,8 +501,9 @@ class Parser
   
   public static function parse($term, Context $ctx = null)
   {
-    return (new self(new Scanner($term)))
-      ->reduce($ctx ?: new Context);
+      $obj = new self(new Scanner($term));
+      return $obj
+              ->reduce($ctx ?: new Context);
   }
 }
 
@@ -513,10 +514,10 @@ class Scanner
   
   const ERR_EMPTY = 'leerer fund! (endlosschleife) in der nähe von: `%s`',
         ERR_MATCH = 'syntax fehler in der nähe von `%s`';
-  
-  protected $tokens = [ 0 ];
-  
-  protected $lookup = [
+
+  protected $tokens = array( 0 );
+
+  protected $lookup = array(
     '+' => T_PLUS,
     '-' => T_MINUS,
     '/' => T_DIV,
@@ -527,8 +528,8 @@ class Scanner
     ')' => T_PCLOSE,
     '!' => T_NOT,
     ',' => T_COMMA
-  ];
-  
+  );
+
   public function __construct($input)
   {
     $prev = new Token(T_OPERATOR, 'noop');
