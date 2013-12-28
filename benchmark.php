@@ -1,23 +1,25 @@
 #!/usr/bin/php
 <?php
 
-require 'parser.php';
+require 'src/RR/Shunt/Parser.php';
+require 'src/RR/Shunt/Context.php';
 
-use rr\shunt\Parser;
+use RR\Shunt\Parser;
+use RR\Shunt\Context;
 
 function benchmark($term) {
   print "$term\n";
-  
+
   $a = microtime(true);
-  
+
   for ($i = 0; $i < 10000; ++$i)
     $r = eval("return $term;");
-  
+
   print "native = $r : " . (microtime(true) - $a) . " (eval)\n";
-  
-  for ($i = 0; $i < 10000; ++$i) 
+
+  for ($i = 0; $i < 10000; ++$i)
     $r = Parser::parse($term);
-  
+
   print "parser = $r : " . (microtime(true) - $a) . "\n\n";
 }
 

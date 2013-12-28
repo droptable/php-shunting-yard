@@ -1,0 +1,14 @@
+{
+    "name": "andig/php-shunting-yard",
+    "type": "project",
+
+    "homepage": "https://github.com/andig/php-shunting-yard",
+    "description": "PSR-0 compatible version of https://github.com/droptable/php-shunting-yard",
+    "license": "MIT",
+    
+    "autoload": {
+        "psr-0": {
+            "RR\\": "src/"
+        }
+    }
+}
