@@ -1,9 +1,10 @@
 <?php
 
-require 'parser.php';
+require 'src/RR/Shunt/Parser.php';
+require 'src/RR/Shunt/Context.php';
 
-use rr\shunt\Parser;
-use rr\shunt\Context;
+use RR\Shunt\Parser;
+use RR\Shunt\Context;
 
 // einfach
 $trm = '3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3';
